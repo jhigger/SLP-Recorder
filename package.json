@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "firebase": "^9.5.0",
+    "node-cron": "^3.0.0"
+  },
+  "name": "firebase",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT"
+}
