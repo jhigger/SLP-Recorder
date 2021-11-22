@@ -78,7 +78,7 @@ app.listen(port, () => {
 	console.log(`Running at http://localhost:${port}`);
 	console.log('Starting CRON Job');
 	cron.schedule(
-		'59 7 * * *',
+		'* * * * *',
 		() => {
 			console.log('Running addRecordForAllUsers every 7:59 AM');
 			addRecordForAllUsers();
