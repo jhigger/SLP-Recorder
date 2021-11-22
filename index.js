@@ -10,6 +10,10 @@ const fetch = require('node-fetch');
 const cron = require('node-cron');
 require('dotenv').config();
 
+const express = require('express');
+const app = express();
+const port = 3000;
+
 const firebaseConfig = {
 	apiKey: process.env.apiKey,
 	authDomain: process.env.authDomain,
@@ -66,14 +70,21 @@ const addRecordForAllUsers = () => {
 		});
 };
 
-console.log('Starting CRON Job');
-cron.schedule(
-	'59 7 * * *',
-	() => {
-		console.log('Running addRecordForAllUsers every 7:59 AM');
-		addRecordForAllUsers();
-	},
-	{
-		timezone: 'Asia/Manila'
-	}
-);
+app.get('/', (req, res) => {
+	res.send('Hello World!');
+});
+
+app.listen(port, () => {
+	console.log(`Running at http://localhost:${port}`);
+	console.log('Starting CRON Job');
+	cron.schedule(
+		'59 7 * * *',
+		() => {
+			console.log('Running addRecordForAllUsers every 7:59 AM');
+			addRecordForAllUsers();
+		},
+		{
+			timezone: 'Asia/Manila'
+		}
+	);
+});
