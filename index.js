@@ -12,7 +12,7 @@ require('dotenv').config();
 
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 const firebaseConfig = {
 	apiKey: process.env.apiKey,
@@ -74,7 +74,7 @@ app.get('/', (req, res) => {
 	res.send('Hello World!');
 });
 
-app.listen(process.env.PORT || port, () => {
+app.listen(port, () => {
 	console.log(`Running at http://localhost:${port}`);
 	console.log('Starting CRON Job');
 	cron.schedule(
