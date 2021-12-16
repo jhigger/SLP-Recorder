@@ -6,8 +6,7 @@ const {
 	getDocs,
 	serverTimestamp,
 	query,
-	orderBy,
-	onSnapshot
+	orderBy
 } = require('firebase/firestore');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
