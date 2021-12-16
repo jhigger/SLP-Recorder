@@ -12,9 +12,11 @@ const {
 const fetch = require('node-fetch');
 const cron = require('node-cron');
 require('dotenv').config();
+const cors = require('cors');
 
 const express = require('express');
 const app = express();
+app.use(cors());
 const port = process.env.PORT || 3000;
 
 const firebaseConfig = {
