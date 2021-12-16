@@ -4,7 +4,10 @@ const {
 	collection,
 	addDoc,
 	getDocs,
-	serverTimestamp
+	serverTimestamp,
+	query,
+	orderBy,
+	onSnapshot
 } = require('firebase/firestore');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
@@ -70,8 +73,71 @@ const addRecordForAllUsers = () => {
 		});
 };
 
+const getAllUsers = async () => {
+	return await getDocs(collection(db, 'users')).then((snapshot) => {
+		return snapshot.docs.map((doc) => {
+			const id = doc.id;
+			const name = doc.data().name;
+			return {id, name};
+		});
+	});
+};
+
+const getAllYesterdaySLP = async () => {
+	const users = await getAllUsers();
+
+	return users.map(async (user) => {
+		const {id, name} = user;
+		const q = query(
+			collection(db, 'users', id, 'records'),
+			orderBy('timestamp', 'asc')
+		);
+
+		return await getDocs(q)
+			.then((snapshot) => {
+				const recordsArray = [];
+				snapshot.docs.forEach((record) => {
+					recordsArray.push(record.data());
+				});
+				return recordsArray;
+			})
+			.then((recordsArray) => {
+				let slp = 0;
+				const length = recordsArray.length;
+				if (length > 1) {
+					const dailySLP = recordsArray.map((data, i) => {
+						const slp = data.slp;
+						const quota = i == 0 ? slp : slp - prev;
+						prev = slp;
+
+						return quota;
+					});
+					slp = dailySLP[length - 1];
+				} else if (length == 1) {
+					const slp = recordsArray[0].slp;
+					slp = slp;
+				}
+
+				return {
+					name,
+					slp
+				};
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	});
+};
+
 app.get('/', (req, res) => {
 	res.send('Hello World!');
+});
+
+app.get('/yesterday', async (req, res) => {
+	const data = await getAllYesterdaySLP();
+	Promise.all(data).then((array) => {
+		res.json(array);
+	});
 });
 
 app.listen(port, () => {
