@@ -93,7 +93,7 @@ const getAllUsers = () => {
 			console.log(err);
 		});
 };
-updateYesterdaySLP('XYv7p6P4F9wx9287lH9Q');
+
 const addRecordForAllUsers = () => {
 	getAllUsers()
 		.then((users) => {
