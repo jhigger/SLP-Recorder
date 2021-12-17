@@ -80,12 +80,28 @@ const updateYesterdaySLP = (id) => {
 		});
 };
 
+// Returns an array of all user documents
+const getAllUsers = () => {
+	const colRef = collection(db, 'users');
+	return getDocs(colRef)
+		.then((snapshot) => {
+			return snapshot.docs.map((doc) => {
+				const id = doc.id;
+				const data = doc.data();
+				return {id, ...data};
+			});
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
 const addRecordForAllUsers = () => {
 	getAllUsers()
 		.then((users) => {
 			users.forEach((user) => {
 				const id = user.id;
-				const ronin = user.data().ronin;
+				const ronin = user.ronin;
 
 				getSLP(ronin).then((slp) => {
 					const colRef = collection(db, 'users', id, 'records');
@@ -100,22 +116,6 @@ const addRecordForAllUsers = () => {
 						});
 					});
 				});
-			});
-		})
-		.catch((err) => {
-			console.log(err);
-		});
-};
-
-// Returns an array of all user documents
-const getAllUsers = () => {
-	const colRef = collection(db, 'users');
-	return getDocs(colRef)
-		.then((snapshot) => {
-			return snapshot.docs.map((doc) => {
-				const id = doc.id;
-				const data = doc.data();
-				return {id, ...data};
 			});
 		})
 		.catch((err) => {
