@@ -87,7 +87,7 @@ const updateYesterdaySLP = (id) => {
 			console.log(err);
 		});
 };
-updateYesterdaySLP('N4FdhQs2BnjgfaOsduia');
+
 // Returns an array of all user documents
 const getAllUsers = () => {
 	const colRef = collection(db, 'users');
