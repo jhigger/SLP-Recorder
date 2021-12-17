@@ -127,9 +127,10 @@ const addRecordForAllUsers = () => {
 const getAllYesterdaySLP = () => {
 	return getAllUsers()
 		.then((users) =>
-			users.map(({name, yesterday}) => {
+			users.map(({name, ronin, yesterday}) => {
 				return {
 					name,
+					ronin,
 					yesterday
 				};
 			})
