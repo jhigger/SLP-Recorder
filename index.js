@@ -52,11 +52,11 @@ const getSLP = async (ronin) => {
 // 	const id = doc.id;
 // });
 
-const getUserRecords = (id, l = 15) => {
+const getUserRecords = (id, lim = 15) => {
 	const q = query(
 		collection(db, 'users', id, 'records'),
 		orderBy('timestamp', 'desc'),
-		limit(l)
+		limit(lim)
 	);
 	return getDocs(q)
 		.then((snapshot) => {
@@ -67,19 +67,21 @@ const getUserRecords = (id, l = 15) => {
 		});
 };
 
+const calculateYesterday = (records) => {
+	let slp = 0;
+
+	if (records.length > 1) {
+		slp = records[0].slp - records[1].slp;
+	} else if (records.length == 1) {
+		slp = records[0].slp;
+	}
+
+	return slp;
+};
+
 const updateYesterdaySLP = (id) => {
 	getUserRecords(id, 2)
-		.then((records) => {
-			let slp = 0;
-
-			if (records.length > 1) {
-				slp = records[0].slp - records[1].slp;
-			} else if (records.length == 1) {
-				slp = records[0].slp;
-			}
-
-			return slp;
-		})
+		.then(calculateYesterday(records))
 		.then((yesterday) => {
 			updateDoc(doc(db, 'users', id), {yesterday});
 		})
