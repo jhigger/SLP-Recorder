@@ -61,13 +61,11 @@ const updateYesterdaySLP = (id) => {
 			const records = snapshot.docs;
 			const length = records.length;
 			const slp = 0;
-			const a = records[0].data().slp;
-			const b = records[1].data().slp;
 
 			if (length > 1) {
-				slp = a - b;
+				slp = records[0].data().slp - records[1].data().slp;
 			} else if (length == 1) {
-				slp = a;
+				slp = records[0].data().slp;
 			}
 
 			return slp;
@@ -95,7 +93,7 @@ const getAllUsers = () => {
 			console.log(err);
 		});
 };
-
+updateYesterdaySLP('XYv7p6P4F9wx9287lH9Q');
 const addRecordForAllUsers = () => {
 	getAllUsers()
 		.then((users) => {
