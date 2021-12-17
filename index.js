@@ -8,7 +8,8 @@ const {
 	query,
 	orderBy,
 	updateDoc,
-	doc
+	doc,
+	limit
 } = require('firebase/firestore');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
@@ -51,21 +52,30 @@ const getSLP = async (ronin) => {
 // 	const id = doc.id;
 // });
 
-const updateYesterdaySLP = (id) => {
+const getUserRecords = (id, l = 15) => {
 	const q = query(
 		collection(db, 'users', id, 'records'),
-		orderBy('timestamp', 'desc')
+		orderBy('timestamp', 'desc'),
+		limit(l)
 	);
-	getDocs(q)
+	return getDocs(q)
 		.then((snapshot) => {
-			const records = snapshot.docs;
-			const length = records.length;
-			const slp = 0;
+			return snapshot.docs.map((record) => record.data());
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
 
-			if (length > 1) {
-				slp = records[0].data().slp - records[1].data().slp;
-			} else if (length == 1) {
-				slp = records[0].data().slp;
+const updateYesterdaySLP = (id) => {
+	getUserRecords(id, 2)
+		.then((records) => {
+			let slp = 0;
+
+			if (records.length > 1) {
+				slp = records[0].slp - records[1].slp;
+			} else if (records.length == 1) {
+				slp = records[0].slp;
 			}
 
 			return slp;
@@ -77,7 +87,7 @@ const updateYesterdaySLP = (id) => {
 			console.log(err);
 		});
 };
-
+updateYesterdaySLP('N4FdhQs2BnjgfaOsduia');
 // Returns an array of all user documents
 const getAllUsers = () => {
 	const colRef = collection(db, 'users');
