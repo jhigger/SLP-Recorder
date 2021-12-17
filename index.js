@@ -107,16 +107,36 @@ const addRecordForAllUsers = () => {
 		});
 };
 
+// Returns an array of all user documents
 const getAllUsers = () => {
 	const colRef = collection(db, 'users');
-	return getDocs(colRef).then((snapshot) => {
-		return snapshot.docs.map((doc) => doc.data());
-	});
+	return getDocs(colRef)
+		.then((snapshot) => {
+			return snapshot.docs.map((doc) => {
+				const id = doc.id;
+				const data = doc.data();
+				return {id, ...data};
+			});
+		})
+		.catch((err) => {
+			console.log(err);
+		});
 };
 
+// Returns an array of all user's slp farmed yesterday
 const getAllYesterdaySLP = () => {
-	// Returns an array of all user documents
-	return getAllUsers().then((users) => users.map((user) => user));
+	return getAllUsers()
+		.then((users) =>
+			users.map(({name, yesterday}) => {
+				return {
+					name,
+					yesterday
+				};
+			})
+		)
+		.catch((err) => {
+			console.log(err);
+		});
 };
 
 app.get('/', (req, res) => {
