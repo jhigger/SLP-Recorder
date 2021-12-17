@@ -6,7 +6,9 @@ const {
 	getDocs,
 	serverTimestamp,
 	query,
-	orderBy
+	orderBy,
+	updateDoc,
+	doc
 } = require('firebase/firestore');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
@@ -49,22 +51,53 @@ const getSLP = async (ronin) => {
 // 	const id = doc.id;
 // });
 
-const addRecordForAllUsers = () => {
-	getDocs(collection(db, 'users'))
+const updateYesterdaySLP = (id) => {
+	const q = query(
+		collection(db, 'users', id, 'records'),
+		orderBy('timestamp', 'desc')
+	);
+	getDocs(q)
 		.then((snapshot) => {
-			snapshot.docs.forEach((doc) => {
-				console.log(`${doc.id} => ${JSON.stringify(doc.data())}`);
-				const id = doc.id;
-				const ronin = doc.data().ronin;
+			const records = snapshot.docs;
+			const length = records.length;
+			const slp = 0;
+			const a = records[0].data().slp;
+			const b = records[1].data().slp;
+
+			if (length > 1) {
+				slp = a - b;
+			} else if (length == 1) {
+				slp = a;
+			}
+
+			return slp;
+		})
+		.then((yesterday) => {
+			updateDoc(doc(db, 'users', id), {yesterday});
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
+const addRecordForAllUsers = () => {
+	getAllUsers()
+		.then((users) => {
+			users.forEach((user) => {
+				const id = user.id;
+				const ronin = user.data().ronin;
 
 				getSLP(ronin).then((slp) => {
+					const colRef = collection(db, 'users', id, 'records');
 					const record = {
 						slp: slp,
 						timestamp: serverTimestamp()
 					};
 
-					addDoc(collection(db, 'users', id, 'records'), record).then((doc) => {
-						console.log(`${doc.id} => slp:${slp}`);
+					addDoc(colRef, record).then(() => {
+						users.forEach((user) => {
+							updateYesterdaySLP(user.id);
+						});
 					});
 				});
 			});
@@ -74,60 +107,16 @@ const addRecordForAllUsers = () => {
 		});
 };
 
-const getAllUsers = async () => {
-	return await getDocs(collection(db, 'users')).then((snapshot) => {
-		return snapshot.docs.map((doc) => {
-			const id = doc.id;
-			const name = doc.data().name;
-			return {id, name};
-		});
+const getAllUsers = () => {
+	const colRef = collection(db, 'users');
+	return getDocs(colRef).then((snapshot) => {
+		return snapshot.docs.map((doc) => doc.data());
 	});
 };
 
-const getAllYesterdaySLP = async () => {
-	const users = await getAllUsers();
-
-	return users.map(async (user) => {
-		const {id, name} = user;
-		const q = query(
-			collection(db, 'users', id, 'records'),
-			orderBy('timestamp', 'asc')
-		);
-
-		return await getDocs(q)
-			.then((snapshot) => {
-				const recordsArray = [];
-				snapshot.docs.forEach((record) => {
-					recordsArray.push(record.data());
-				});
-				return recordsArray;
-			})
-			.then((recordsArray) => {
-				let slp = 0;
-				const length = recordsArray.length;
-				if (length > 1) {
-					const dailySLP = recordsArray.map((data, i) => {
-						const slp = data.slp;
-						const quota = i == 0 ? slp : slp - prev;
-						prev = slp;
-
-						return quota;
-					});
-					slp = dailySLP[length - 1];
-				} else if (length == 1) {
-					const slp = recordsArray[0].slp;
-					slp = slp;
-				}
-
-				return {
-					name,
-					slp
-				};
-			})
-			.catch((err) => {
-				console.log(err);
-			});
-	});
+const getAllYesterdaySLP = () => {
+	// Returns an array of all user documents
+	return getAllUsers().then((users) => users.map((user) => user));
 };
 
 app.get('/', (req, res) => {
