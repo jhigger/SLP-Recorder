@@ -104,7 +104,7 @@ const addRecordForAllUsers = () => {
 				getSLP(ronin).then((slp) => {
 					const colRef = collection(db, 'users', id, 'records');
 					const record = {
-						slp: slp,
+						slp,
 						timestamp: serverTimestamp()
 					};
 
