@@ -52,6 +52,7 @@ const getSLP = async (ronin) => {
 // 	const id = doc.id;
 // });
 
+// Returns an array of (15) records of a user
 const getUserRecords = (id, lim = 15) => {
 	const q = query(
 		collection(db, 'users', id, 'records'),
@@ -62,6 +63,77 @@ const getUserRecords = (id, lim = 15) => {
 		.then((snapshot) => {
 			return snapshot.docs.map((record) => record.data());
 		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
+// Returns an array of all user documents
+const getAllUsers = () => {
+	const colRef = collection(db, 'users');
+	return getDocs(colRef)
+		.then((snapshot) => {
+			return snapshot.docs.map((doc) => {
+				const id = doc.id;
+				const data = doc.data();
+				return {id, ...data};
+			});
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
+// Returns an array of all user's slp farmed yesterday
+const getAllYesterdaySLP = () => {
+	return getAllUsers()
+		.then((users) =>
+			users.map(({name, yesterday}) => {
+				return {
+					name,
+					yesterday
+				};
+			})
+		)
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
+const getDailySLP = (id) => {
+	return getUserRecords(id)
+		.then((records) => {
+			return records.map((record, i, array) => {
+				let slp = 0;
+
+				if (array.length > 1) {
+					if (i + 1 <= array.length - 1) {
+						slp = records[i].slp - records[i + 1].slp;
+					}
+				} else if (array.length == 1) {
+					slp = records[i].slp;
+				}
+
+				const datetime = record.timestamp.toDate();
+				datetime.setDate(datetime.getDate() - 1);
+				const day = datetime.toDateString();
+
+				return {slp, day};
+			});
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
+const getALLDailySLP = () => {
+	return getAllUsers()
+		.then((users) =>
+			users.map(async ({id, name, ronin}) => {
+				const daily = await getDailySLP(id);
+				return {name, ronin, daily};
+			})
+		)
 		.catch((err) => {
 			console.log(err);
 		});
@@ -84,22 +156,6 @@ const updateYesterdaySLP = (id) => {
 		.then(calculateYesterday(records))
 		.then((yesterday) => {
 			updateDoc(doc(db, 'users', id), {yesterday});
-		})
-		.catch((err) => {
-			console.log(err);
-		});
-};
-
-// Returns an array of all user documents
-const getAllUsers = () => {
-	const colRef = collection(db, 'users');
-	return getDocs(colRef)
-		.then((snapshot) => {
-			return snapshot.docs.map((doc) => {
-				const id = doc.id;
-				const data = doc.data();
-				return {id, ...data};
-			});
 		})
 		.catch((err) => {
 			console.log(err);
@@ -133,29 +189,19 @@ const addRecordForAllUsers = () => {
 		});
 };
 
-// Returns an array of all user's slp farmed yesterday
-const getAllYesterdaySLP = () => {
-	return getAllUsers()
-		.then((users) =>
-			users.map(({name, ronin, yesterday}) => {
-				return {
-					name,
-					ronin,
-					yesterday
-				};
-			})
-		)
-		.catch((err) => {
-			console.log(err);
-		});
-};
-
 app.get('/', (req, res) => {
 	res.send('Hello World!');
 });
 
 app.get('/yesterday', async (req, res) => {
 	const data = await getAllYesterdaySLP();
+	Promise.all(data).then((array) => {
+		res.json(array);
+	});
+});
+
+app.get('/daily', async (req, res) => {
+	const data = await getALLDailySLP();
 	Promise.all(data).then((array) => {
 		res.json(array);
 	});
