@@ -52,8 +52,8 @@ const getSLP = async (ronin) => {
 // 	const id = doc.id;
 // });
 
-// Returns an array of (15) records of a user
-const getUserRecords = (id, lim = 15) => {
+// Returns an array of (16) records of a user
+const getUserRecords = (id, lim = 16) => {
 	const q = query(
 		collection(db, 'users', id, 'records'),
 		orderBy('timestamp', 'desc'),
@@ -100,26 +100,31 @@ const getAllYesterdaySLP = () => {
 		});
 };
 
+// Returns an array of (15 days) daily farmed slp
 const getDailySLP = (id) => {
 	return getUserRecords(id)
 		.then((records) => {
-			return records.map((record, i, array) => {
-				let slp = 0;
+			return records
+				.map((record, i, array) => {
+					if (i < 15) {
+						let slp = 0;
 
-				if (array.length > 1) {
-					if (i + 1 <= array.length - 1) {
-						slp = records[i].slp - records[i + 1].slp;
+						if (array.length > 1) {
+							if (i + 1 < array.length) {
+								slp = records[i].slp - records[i + 1].slp;
+							}
+						} else if (array.length == 1) {
+							slp = records[i].slp;
+						}
+
+						const datetime = record.timestamp.toDate();
+						datetime.setDate(datetime.getDate() - 1);
+						const day = datetime.toDateString();
+
+						return {slp, day};
 					}
-				} else if (array.length == 1) {
-					slp = records[i].slp;
-				}
-
-				const datetime = record.timestamp.toDate();
-				datetime.setDate(datetime.getDate() - 1);
-				const day = datetime.toDateString();
-
-				return {slp, day};
-			});
+				})
+				.slice(0, 15);
 		})
 		.catch((err) => {
 			console.log(err);
