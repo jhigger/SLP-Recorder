@@ -158,7 +158,7 @@ const calculateYesterday = (records) => {
 
 const updateYesterdaySLP = (id) => {
 	getUserRecords(id, 2)
-		.then(calculateYesterday(records))
+		.then((records) => calculateYesterday(records))
 		.then((yesterday) => {
 			updateDoc(doc(db, 'users', id), {yesterday});
 		})
@@ -182,9 +182,7 @@ const addRecordForAllUsers = () => {
 					};
 
 					addDoc(colRef, record).then(() => {
-						users.forEach((user) => {
-							updateYesterdaySLP(user.id);
-						});
+						updateYesterdaySLP(user.id);
 					});
 				});
 			});
